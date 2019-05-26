@@ -28,7 +28,7 @@
 /*********************************************************
         Your extra headers and static declarations
  *********************************************************/
-
+#include <assert.h>
 /*********************************************************
                            End
  *********************************************************/
@@ -63,7 +63,7 @@ main (int argc, char *argv[])
        K-Means),and read in all data points into static array `data`. */
     int pn, cn;
 
-    fscanf(fi, "%d / %d\n", &pn, &cn);
+    assert(fscanf(fi, "%d / %d\n", &pn, &cn) == 2);
 
     point_t * const data = new point_t[pn];
     color_t * const coloring = new color_t[pn];
