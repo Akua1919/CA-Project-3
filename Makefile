@@ -11,7 +11,7 @@
 CC=g++
 CFLAGS=-Wpedantic -Wall -Wextra -Werror -O2 -fopenmp -std=c++11
 
-all: kmeans
+all: kmeans kmeans-origin
 
 kmeans: kmeans.cpp kmeans.h
 	${CC} ${CFLAGS} kmeans.cpp -o kmeans
@@ -19,10 +19,17 @@ kmeans: kmeans.cpp kmeans.h
 .PHONY: clean gen plot
 
 clean:
-	rm -f kmeans
+	rm -f output4.txt
 
 gen: generate.py
 	python3 generate.py ${FILE}
 
 plot: plot.py
 	python3 plot.py ${FILE}
+
+kmeans-origin: kmeans-origin.cpp kmeans.h
+	${CC} ${CFLAGS} kmeans-origin.cpp -o kmeans-origin
+
+excute:
+	./kmeans input4.txt output4.txt
+	rm -f output4.txt

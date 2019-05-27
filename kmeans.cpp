@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <emmintrin.h>
+#define INF std::numeric_limits<double>::infinity()
 /*********************************************************
                            End
  *********************************************************/
@@ -146,6 +148,7 @@ main (int argc, char *argv[])
  *     5. ...
  *
  */
+
 void
 kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
         const int pn, const int cn)
@@ -164,19 +167,17 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
         {
         #pragma omp for
         for (int i = 0; i < pn; ++i) {
-            color_t new_color = cn;
-            double min_dist = std::numeric_limits<double>::infinity();
+            color_t new_color = 0;
+            double min_dist = INF;
 
-
-            for (color_t c = 0; c < cn; ++c) {
-                double dist = sqrt(pow(data[i].getX() - mean[c].getX(), 2) +
-                                   pow(data[i].getY() - mean[c].getY(), 2));
-                if (dist < min_dist) {
+            for (color_t c = 0; c < cn; c++) {
+                double dist = pow(data[i].getX() - mean[c].getX(), 2) +
+                                   pow(data[i].getY() - mean[c].getY(), 2);
+                if (dist < min_dist)
+                {
                     min_dist = dist;
                     new_color = c;
                 }
-            
-
             }
 
             if (coloring[i] != new_color) {
@@ -189,31 +190,61 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
         /* Calculate the new mean for each cluster to be the current average
            of point positions in the cluster. */
         
+        
         #pragma omp parallel
         {
         #pragma omp for
         for (color_t c = 0; c < cn; ++c) {
-            double sum_x = 0, sum_y = 0;
+            double A[2] = {0,0};
+            __m128d sum = _mm_loadu_pd( A+0 );
             int count = 0;
 
-            
-            for (int i = 0; i < pn; ++i) {
+            for (int i = 0; i < pn/4*4; i+=4) {
                 if (coloring[i] == c) {
-                    sum_x += data[i].getX();
-                    sum_y += data[i].getY();
+                    double B[2] = {data[i].getX(),data[i].getY()};
+                    __m128d a_point = _mm_loadu_pd( B+0 );
+                    sum = _mm_add_pd( sum, a_point );
+                    count++;
+                }
+                if (coloring[i+1] == c) {
+                    double B[2] = {data[i+1].getX(),data[i+1].getY()};
+                    __m128d a_point = _mm_loadu_pd( B+0 );
+                    sum = _mm_add_pd( sum, a_point );
+                    count++;
+                }
+                if (coloring[i+2] == c) {
+                    double B[2] = {data[i+2].getX(),data[i+2].getY()};
+                    __m128d a_point = _mm_loadu_pd( B+0 );
+                    sum = _mm_add_pd( sum, a_point );
+                    count++;
+                }
+                if (coloring[i+3] == c) {
+                    double B[2] = {data[i+3].getX(),data[i+3].getY()};
+                    __m128d a_point = _mm_loadu_pd( B+0 );
+                    sum = _mm_add_pd( sum, a_point );
                     count++;
                 }
             }
 
-            mean[c].setXY(sum_x / count, sum_y / count);
+            for(int i = pn/4*4; i<pn; i++){
+                if (coloring[i] == c) {
+                    double B[2] = {data[i].getX(),data[i].getY()};
+                    __m128d a_point = _mm_loadu_pd( B+0 );
+                    sum = _mm_add_pd( sum, a_point );
+                    count++;
+                }
+            }
+            
+            _mm_storeu_pd( A+0, sum );
+            mean[c].setXY(A[0] / count, A[1] / count);
         }
         }
-
-
-
         
+   
     } while (!converge);
 }
+
+
 /*********************************************************
                            End
  *********************************************************/
