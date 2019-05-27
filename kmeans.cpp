@@ -29,6 +29,8 @@
         Your extra headers and static declarations
  *********************************************************/
 #include <assert.h>
+#include <stdlib.h>
+#include <omp.h>
 /*********************************************************
                            End
  *********************************************************/
@@ -182,15 +184,13 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
         /* Calculate the new mean for each cluster to be the current average
            of point positions in the cluster. */
         
-        #pragma omp parallel
-        {
-        #pragma omp for
         for (color_t c = 0; c < cn; ++c) {
             double sum_x = 0, sum_y = 0;
             int count = 0;
 
             #pragma omp parallel
             {
+
             #pragma omp for
             for (int i = 0; i < pn; ++i) {
                 if (coloring[i] == c) {
@@ -202,16 +202,14 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
             }
 
             }
-
             mean[c].setXY(sum_x / count, sum_y / count);
         }
 
-        }
+
 
         
     } while (!converge);
 }
-
 /*********************************************************
                            End
  *********************************************************/
