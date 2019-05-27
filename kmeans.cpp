@@ -161,6 +161,7 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
             color_t new_color = cn;
             double min_dist = std::numeric_limits<double>::infinity();
 
+
             for (color_t c = 0; c < cn; ++c) {
                 double dist = sqrt(pow(data[i].getX() - mean[c].getX(), 2) +
                                    pow(data[i].getY() - mean[c].getY(), 2));
@@ -168,6 +169,8 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
                     min_dist = dist;
                     new_color = c;
                 }
+            
+
             }
 
             if (coloring[i] != new_color) {
@@ -178,20 +181,34 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
 
         /* Calculate the new mean for each cluster to be the current average
            of point positions in the cluster. */
+        
+        #pragma omp parallel
+        {
+        #pragma omp for
         for (color_t c = 0; c < cn; ++c) {
             double sum_x = 0, sum_y = 0;
             int count = 0;
 
+            #pragma omp parallel
+            {
+            #pragma omp for
             for (int i = 0; i < pn; ++i) {
                 if (coloring[i] == c) {
+                    #pragma omp critical
                     sum_x += data[i].getX();
                     sum_y += data[i].getY();
                     count++;
                 }
             }
 
+            }
+
             mean[c].setXY(sum_x / count, sum_y / count);
         }
+
+        }
+
+        
     } while (!converge);
 }
 
