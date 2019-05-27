@@ -159,6 +159,10 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
 
         /* Compute the color of each point. A point gets assigned to the
            cluster with the nearest center point. */
+        
+        #pragma omp parallel
+        {
+        #pragma omp for
         for (int i = 0; i < pn; ++i) {
             color_t new_color = cn;
             double min_dist = std::numeric_limits<double>::infinity();
@@ -180,6 +184,7 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
                 converge = false;
             }
         }
+        }
 
         /* Calculate the new mean for each cluster to be the current average
            of point positions in the cluster. */
@@ -191,6 +196,7 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
             double sum_x = 0, sum_y = 0;
             int count = 0;
 
+            
             for (int i = 0; i < pn; ++i) {
                 if (coloring[i] == c) {
                     sum_x += data[i].getX();
