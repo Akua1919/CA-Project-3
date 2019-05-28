@@ -26,3 +26,7 @@ gen: generate.py
 
 plot: plot.py
 	python3 plot.py ${FILE}
+
+test:
+	./kmeans input.txt output.txt
+	rm -f output.txt

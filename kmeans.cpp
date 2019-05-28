@@ -33,6 +33,9 @@
 #include <omp.h>
 #include <emmintrin.h>
 #define INF std::numeric_limits<double>::infinity()
+int count[20];
+int x[20];
+int y[20];
 /*********************************************************
                            End
  *********************************************************/
@@ -181,66 +184,37 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
             }
 
             if (coloring[i] != new_color) {
+                
                 coloring[i] = new_color;
                 converge = false;
+
             }
         }
         }
 
         /* Calculate the new mean for each cluster to be the current average
            of point positions in the cluster. */
-        
-        
+
         #pragma omp parallel
         {
         #pragma omp for
-        for (color_t c = 0; c < cn; ++c) {
-            double A[2] = {0,0};
-            __m128d sum = _mm_loadu_pd( A+0 );
-            int count = 0;
+        for (int i = 0; i < pn; ++i) {
+                int c =coloring[i];            
+                x[c] += data[i].getX();
+                y[c] += data[i].getY();
+                count[c]++;
+        }
+        }
 
-            for (int i = 0; i < pn/4*4; i+=4) {
-                if (coloring[i] == c) {
-                    double B[2] = {data[i].getX(),data[i].getY()};
-                    __m128d a_point = _mm_loadu_pd( B+0 );
-                    sum = _mm_add_pd( sum, a_point );
-                    count++;
-                }
-                if (coloring[i+1] == c) {
-                    double B[2] = {data[i+1].getX(),data[i+1].getY()};
-                    __m128d a_point = _mm_loadu_pd( B+0 );
-                    sum = _mm_add_pd( sum, a_point );
-                    count++;
-                }
-                if (coloring[i+2] == c) {
-                    double B[2] = {data[i+2].getX(),data[i+2].getY()};
-                    __m128d a_point = _mm_loadu_pd( B+0 );
-                    sum = _mm_add_pd( sum, a_point );
-                    count++;
-                }
-                if (coloring[i+3] == c) {
-                    double B[2] = {data[i+3].getX(),data[i+3].getY()};
-                    __m128d a_point = _mm_loadu_pd( B+0 );
-                    sum = _mm_add_pd( sum, a_point );
-                    count++;
-                }
-            }
-
-            for(int i = pn/4*4; i<pn; i++){
-                if (coloring[i] == c) {
-                    double B[2] = {data[i].getX(),data[i].getY()};
-                    __m128d a_point = _mm_loadu_pd( B+0 );
-                    sum = _mm_add_pd( sum, a_point );
-                    count++;
-                }
-            }
-            
-            _mm_storeu_pd( A+0, sum );
-            mean[c].setXY(A[0] / count, A[1] / count);
+        #pragma omp parallel
+        {
+        #pragma omp for
+        for (int i = 0; i < cn; i++)
+        {
+            mean[i].setXY(x[i] / count[i], y[i] / count[i]);
         }
         }
         
-   
     } while (!converge);
 }
 
