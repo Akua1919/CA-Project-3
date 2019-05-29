@@ -33,9 +33,6 @@
 #include <omp.h>
 #include <emmintrin.h>
 #define INF std::numeric_limits<double>::infinity()
-int count[20];
-int x[20];
-int y[20];
 /*********************************************************
                            End
  *********************************************************/
@@ -185,10 +182,8 @@ kmeans (point_t * const data, point_t * const mean, color_t * const coloring,
             }
 
             if (coloring[i] != new_color) {
-                
                 coloring[i] = new_color;
                 converge = false;
-
             }
         }
         }
