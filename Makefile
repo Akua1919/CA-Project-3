@@ -29,4 +29,4 @@ plot: plot.py
 
 test:
 	./kmeans input.txt output.txt
-	rm -f output.txt
+	#rm -f output.txt
